@@ -5,6 +5,7 @@ Introduction
 In many scenarios, we would like to know how “similar” two documents are are to each other. For example, search engines like Google or Bing need to group similar web pages together such that only one among a group of similar documents is displayed as part of the search result. As another example, professors can detect plagirism by checking how similar students’ handins are. We refer to the process of measuring document similarity as approximate matching. In this lab, you will write a program to approximately match one input file against another file. The goal is to get your hands dirty in programming using C, e.g. manipulating arrays, pointers, number and character representation, bit operations etc.
 
 Approximate Matching
+
 Checking whether a document is an exact duplicate of another is straightforward 1. By contrast, it is trickier to determine similarity. Let us first start with an inefficient but working algorithm that measures how well document X (of size m)) approximately-matches another document Y (of size n). The algorithm considers
 every substring of length k in X and checks if that substring appears in document Y. For example, if the
 content of X is “abcd” and k = 2, then the algorithm tries to match 3 substrings (“ab”, “bc”, “cd”) in Y. For
@@ -14,6 +15,7 @@ score. The more similar file X is to Y, the higher its final score. In particula
 The naive algorithm works, but is slow. In particular, the naive way of checking whether a string appears as a substring in Y is to check if that string matches a substring of length k at every position 0, 1, 2, ..., (n − k) in Y. Thus, each substring matching takes O(k ∗ n) times, and since there are a total of m − k + 1 substrings of X to be matched in Y, the total runtime would be O(k ∗ m ∗ n). This runtime is pretty bad and we will improve it greatly in this lab step by step.
 
 Simple Approximate Matching
+
 As the first optimization, we observe that it is not necessary to do substring matching for all m − k + 1 substrings of X. Rather, we simply “chop” X (conceptually) into ⌊ m ⌋ chunks and tries to match each chunk
 k
 in Y. For example, if the content of X is “abcd” and k = 2, the optimized algorithm only matches 2 chunks (“ab”, “cd”) instead of 3 substrings as in the original naive algorithm. Doing so cuts down the runtime by a factor of k to O(m ∗ n) 2. We refer to this version as the simple algorithm.
@@ -27,6 +29,7 @@ The main procedure first invokes normalize to normalize the content of files X a
 Testing: Runthegiventesterprogram$./rktest.py0
 
 Rabin-Karp Approximate Matching
+
 Our next optimization comes from using the brilliant Rabin-Karp substring matching algorithm (RK for short), invented in the eighties by two famous computer scientists, Michael Rabin and Richard Karp 3.
 RK checks if a given query string P appears as a substring in Y. At a high level, RK works by computing a hash for the query string, hash(P ), as well as a hash for each of the n − k + 1 substrings of length k in Y, hash(Y [0...k − 1]), hash(Y [1...k]), ..., hash(Y [n − k...n − 1]). A hash function turns any arbitary string into a b-bit hash value with the property that collision (two different strings with the same hash value) is unlikely. Therefore, by comparing hash(P ) with each of the n − k + 1 hashes from Y, we can check if P appears as a substring in Y. There are many nice hash functions out there (such as MD5, SHA-1), but RK’s magical ingredient is its “rolling” hash function. Specifically, given hash(Y [i...i + k − 1]), it takes only constant time instead of O(k) time to compute hash(Y [i + 1...i + k]).
 Now we explain how the rolling hash is computed. Let’s treat each character as a digit in radix-d notation. We choose radix d = 256 since each character in the C language is represented by a single byte and we can conveniently use the byte value of the character as its digit. For example, the string ’ab’ corresponds to two digits with one being 97 (the ASCII value of ’a’), and the other being 98 (the ASCII value of ’b’). The decimal value of ’ab’ in radix-256 can be calculated as 256 ∗ 97 + 98 = 24930. The hash of a string P in RKishash(P[0...k−1])=256k−1 ∗P[0]+256k−2 ∗P[1]+...+256∗P[k−2]+P[k−1].Nowlet’s see how to do a rolling calculation of the values for every substring of Y. Let y0 = hash(Y [0...k − 1] and yi = hash(Y [i...i + k − 1]). We can compute yi+1 from yi in constant time, by observing that
